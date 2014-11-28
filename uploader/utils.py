@@ -12,7 +12,7 @@ def validate_auth_token(view):
 
     def _check_token(self, request, *args, **kwargs):
 
-        auth_token = request.POST['auth_token']
+        auth_token = request.POST.get('auth_token')
 
         if auth_token:
             session = import_string(settings.SESSION_ENGINE).SessionStore(
