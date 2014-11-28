@@ -3,6 +3,10 @@ import json
 from django.views.generic import View
 from django.http import HttpResponse
 from django.contrib.auth.models import User
+from django.utils.module_loading import import_string
+from django.contrib.auth import SESSION_KEY, HASH_SESSION_KEY
+from django.conf import settings
+from .utils import ValidateAuthToken, validate_auth_token
 
 
 class AuthView(View):
@@ -15,9 +19,8 @@ class AuthView(View):
         Check the given username and password parameters on the POST request
         is valid, if so generate a token for further communication.
         """
-        import pdb; pdb.set_trace()
         result = {
-            'token': '',
+            'auth_token': '',
             'success': True,
             'error_msg': None
         }
@@ -39,7 +42,18 @@ class AuthView(View):
         if user:
             user = user[0]
             if user.check_password(password):
-                result['token'] = 'testToken'
+
+                # Generate A token for this user.
+                session_key = request.POST.get('auth_token', None)
+
+                session = import_string(settings.SESSION_ENGINE).SessionStore(
+                    session_key)
+
+                session[SESSION_KEY] = user.pk
+                session[HASH_SESSION_KEY] = user.get_session_auth_hash()
+                session.save()
+                result['auth_token'] = session.session_key
+
             else:
                 result['success'] = False
                 result['error_msg'] = (" Authentication Failed")
@@ -60,7 +74,7 @@ class UploaderView(View):
     Handles the Image upload operations and send the response to the client
     right after receiving the request from the client.
     """
-
+    @validate_auth_token
     def post(self, request, *args, **kwargs):
         """
         Handles the HTTP POST request.
