@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.utils.module_loading import import_string
 from django.contrib.auth import SESSION_KEY, HASH_SESSION_KEY
 from django.conf import settings
-from .utils import ValidateAuthToken, validate_auth_token
+from .utils import validate_auth_token
 
 
 class AuthView(View):
@@ -35,7 +35,7 @@ class AuthView(View):
             return HttpResponse(json.dumps(result),
                                 content_type="application/json")
 
-        # Authenticate the username and password with the user db and geneate
+        # Authenticate the username and password with the user db and generate
         # a session token for future transactions.
         user = User.objects.filter(username=username)[:1]
 
@@ -53,6 +53,8 @@ class AuthView(View):
                 session[HASH_SESSION_KEY] = user.get_session_auth_hash()
                 session.save()
                 result['auth_token'] = session.session_key
+
+                # TODO: Add proper cleanup operations of stale tokens.
 
             else:
                 result['success'] = False

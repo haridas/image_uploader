@@ -83,6 +83,27 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+MEDIA_ROOT = os.path.join(os.path.dirname(__file__), "../media")
+if not os.path.exists(MEDIA_ROOT):
+    os.makedirs(MEDIA_ROOT)
+
+#
+# We will create these many variants of one single image uploaded by a user.
+#
+# Format:-
+#   ('label', (width, height), cache_it)
+#
+# We can use this for CSS style class definitions.
+# The Third flag is reserved for future usage, Caching certain type of images
+# right after the resize operation.
+#
+IMAGE_VARIENTS = [
+    ('thumbnail', (20, 40), True),
+    ('small', (40, 30), True),
+    ('medium', (100, 60), False),
+    ('large', (200, 100), False)
+]
+
 
 #
 # Celery queue settings.
