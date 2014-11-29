@@ -70,7 +70,53 @@ class TestAuthAPI(TestCase):
 
 
 class TestUploadAPI(TestCase):
-    pass
+    def setUp(self):
+        self.upload_url = reverse("upload_image")
+        self.auth_url = reverse("authenticate")
+        self.auth_data = {
+            'username': 'haridas',
+            'password': 'haridas'
+        }
+
+        self.client = Client()
+
+        self.image = open(os.path.join(os.path.dirname(__file__),
+                                       "fixtures/images/me.jpg"), 'rb')
+
+    def test_upload_image(self):
+        payload = {
+            'auth_token': self._get_auth_token(),
+            'image': self.image
+        }
+        response = json.loads(
+            self.client.post(self.upload_url, data=payload).content)
+
+        self.assertTrue(response['success'])
+        self.assertTrue(not response['error_msg'])
+        self.assertEqual(len(response['image_urls']),
+                         len(settings.IMAGE_VARIANTS) + 1)
+        self.assertEqual(response['id'], 1)
+
+    def test_error_upload(self):
+        payload = {
+            'auth_token': self._get_auth_token(),
+            'image1': self.image
+        }
+        response = json.loads(
+            self.client.post(self.upload_url, data=payload).content)
+
+        self.assertFalse(response['success'])
+        self.assertTrue(response['error_msg'])
+
+    def _get_auth_token(self):
+        u = User(username=self.auth_data['username'])
+        u.set_password(self.auth_data['password'])
+        u.save()
+
+        response = self.client.post(self.auth_url, data=self.auth_data)
+        content = json.loads(response.content)
+        auth_token = content['auth_token']
+        return auth_token
 
 
 class TestImageModel(TestCase):

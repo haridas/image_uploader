@@ -4,6 +4,7 @@ import functools
 from django.utils import timezone
 from django.http import HttpResponse
 from django.utils.module_loading import import_string
+from django.contrib.auth.models import User
 from django.contrib.auth import SESSION_KEY
 from django.conf import settings
 
@@ -21,6 +22,9 @@ def validate_auth_token(view):
             # Token should be a valid one.
             if SESSION_KEY in session and \
                session.get_expiry_date() > timezone.now():
+
+                # Keep the user object on request.
+                request.user = User.objects.get(pk=session[SESSION_KEY])
                 return view(self, request, *args, **kwargs)
 
         # All other cases means the auth token expired or invalid.

@@ -1,12 +1,16 @@
 import json
+import tempfile
 
 from django.views.generic import View
 from django.http import HttpResponse
 from django.contrib.auth.models import User
+from django.core.files import File
 from django.utils.module_loading import import_string
 from django.contrib.auth import SESSION_KEY, HASH_SESSION_KEY
+from django.db import DatabaseError
 from django.conf import settings
 from .utils import validate_auth_token
+from .models import Image
 
 
 class AuthView(View):
@@ -81,7 +85,53 @@ class UploaderView(View):
         """
         Handles the HTTP POST request.
         """
-        return HttpResponse(content='{}', content_type="application/json")
+        data = {
+            'id': None,
+            'success': False,
+            'error_msg': None,
+            'image_urls': {}
+        }
+
+        # Save the uploaded image on to temporary location.
+        try:
+            im = request.FILES['image']
+        except KeyError:
+            data['error_msg'] = "Attribute `image` doesn't exists."
+            return HttpResponse(content=json.dumps(data),
+                                content_type="application/json")
+        else:
+            if im.multiple_chunks():
+                # preserve the original name.
+                name = im.name
+                full_im = self._save_file_on_temp_loc(im)
+                im = File(full_im)
+                im.name = name
+            else:
+                im = File(im)
+
+        # Create new Image object.
+        try:
+            image = Image()
+            image.image = im
+            image.user = request.user
+            image.save()
+
+            # All looks fine.. prepare correct set of data.
+            data['image_urls'] = image.resized_image_urls
+            data['id'] = image.id
+            data['success'] = True
+        except DatabaseError as ex:
+            data['error_msg'] = ("Error while saving on the Database "
+                                 " - {}".format(ex.message))
+
+        return HttpResponse(content=json.dumps(data),
+                            content_type="application/json")
+
+    def _save_file_on_temp_loc(self, image):
+        tp = tempfile.NamedTemporaryFile()
+        for chunk in image.chunks():
+            tp.write(chunk)
+        return tp
 
 
 class CatchAllView(View):
