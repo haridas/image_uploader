@@ -97,7 +97,7 @@ if not os.path.exists(MEDIA_ROOT):
 # The Third flag is reserved for future usage, Caching certain type of images
 # right after the resize operation.
 #
-IMAGE_VARIENTS = [
+IMAGE_VARIANTS = [
     ('thumbnail', (20, 40), True),
     ('small', (40, 30), True),
     ('medium', (100, 60), False),
