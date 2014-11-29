@@ -108,6 +108,16 @@ class TestUploadAPI(TestCase):
         self.assertFalse(response['success'])
         self.assertTrue(response['error_msg'])
 
+    #def test_upload_resized_image_creation(self):
+    #    """ Check the resized images are being created on time """
+    #    payload = {
+    #        'auth_token': self._get_auth_token(),
+    #        'image1': self.image
+    #    }
+
+    #    response = json.loads(
+    #        self.client.post(self.upload_url, data=payload).content)
+
     def _get_auth_token(self):
         u = User(username=self.auth_data['username'])
         u.set_password(self.auth_data['password'])

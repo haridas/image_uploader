@@ -11,6 +11,7 @@ from django.db import DatabaseError
 from django.conf import settings
 from .utils import validate_auth_token
 from .models import Image
+from .tasks import resize_images
 
 
 class AuthView(View):
@@ -120,6 +121,10 @@ class UploaderView(View):
             data['image_urls'] = image.resized_image_urls
             data['id'] = image.id
             data['success'] = True
+
+            # place the image resize job background using celery tasks.
+            resize_images.delay(image.resized_image_paths,
+                                image.IMG_LABEL)
         except DatabaseError as ex:
             data['error_msg'] = ("Error while saving on the Database "
                                  " - {}".format(ex.message))
