@@ -75,7 +75,7 @@ class Image(models.Model):
             for resized in settings.IMAGE_VARIANTS:
 
                 image_urls[resized[0]] = os.path.join(
-                    os.path.dirname(self.image.path),
+                    os.path.dirname(self.image.url),
                     self.get_resized_image_names(self.name, resized[0]))
 
             self._resized_image_urls = image_urls
