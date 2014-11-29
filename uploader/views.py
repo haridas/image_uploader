@@ -82,3 +82,7 @@ class UploaderView(View):
         Handles the HTTP POST request.
         """
         return HttpResponse(content='{}', content_type="application/json")
+
+
+class CatchAllView(View):
+    pass

@@ -1,13 +1,72 @@
 import os
-from django.test import TestCase
+import json
+
+from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
+from django.contrib.auth import SESSION_KEY
+from django.utils.module_loading import import_string
+from django.utils import timezone
 from django.core.files import File
+from django.test import TestCase
+from django.test import Client
+
+
 from django.conf import settings
 from .models import Image
 
 
 class TestAuthAPI(TestCase):
-    pass
+    def setUp(self):
+        self.client = Client()
+        self.auth_url = reverse("authenticate")
+        self.auth_data = {
+            'username': 'haridas',
+            'password': 'haridas'
+        }
+
+    def test_auth_failure(self):
+        response = self.client.post(self.auth_url, data=self.auth_data)
+
+        content = json.loads(response.content)
+        self.assertTrue(response.status_code == 200)
+        self.assertFalse(content['success'])  # No User created yet.
+
+    def test_auth_success(self):
+
+        self._create_user()
+
+        response = self.client.post(self.auth_url, data=self.auth_data)
+        content = json.loads(response.content)
+        self.assertTrue(response.status_code == 200)
+        self.assertTrue(content['success'])
+
+    def test_authentication_using_auth_token(self):
+        user = self._create_user()
+        response = self.client.post(self.auth_url, data=self.auth_data)
+        content = json.loads(response.content)
+        auth_token = content['auth_token']
+
+        session = import_string(
+            settings.SESSION_ENGINE).SessionStore(auth_token)
+
+        self.assertTrue(session.get_expiry_date() > timezone.now())
+        self.assertTrue(SESSION_KEY in session)
+        self.assertTrue(session[SESSION_KEY] == user.pk)
+
+        # Check auth_toekn is valid on backend itself.
+
+    def test_api_with_junk_data(self):
+        self._create_user()
+        self.auth_data['username'] = 'haridas1'
+        response = self.client.post(self.auth_url, data=self.auth_data)
+        content = json.loads(response.content)
+        self.assertFalse(content['success'])
+
+    def _create_user(self):
+        u = User(username=self.auth_data['username'])
+        u.set_password(self.auth_data['password'])
+        u.save()
+        return u
 
 
 class TestUploadAPI(TestCase):
