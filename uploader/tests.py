@@ -11,10 +11,12 @@ from django.test import TestCase
 from django.test import Client
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
+from PIL import Image as PILImage
 
 
 from django.conf import settings
 from .models import Image
+from .tasks import FILE_PATH_PARSER
 
 
 class TestAuthAPI(TestCase):
@@ -110,16 +112,6 @@ class TestUploadAPI(TestCase):
         self.assertFalse(response['success'])
         self.assertTrue(response['error_msg'])
 
-    #def test_upload_resized_image_creation(self):
-    #    """ Check the resized images are being created on time """
-    #    payload = {
-    #        'auth_token': self._get_auth_token(),
-    #        'image1': self.image
-    #    }
-
-    #    response = json.loads(
-    #        self.client.post(self.upload_url, data=payload).content)
-
     def _get_auth_token(self):
         u = User(username=self.auth_data['username'])
         u.set_password(self.auth_data['password'])
@@ -212,3 +204,106 @@ class AwsS3Tests(TestCase):
             keys.append(key.name)
 
         self.assertTrue(key.key in keys)
+
+
+#
+# Kinda full integration test to cover all the components of the system.
+#
+class FullIntegrationTest(TestCase):
+    def setUp(self):
+        self.upload_url = reverse("upload_image")
+        self.auth_url = reverse("authenticate")
+        self.auth_data = {
+            'username': 'haridas',
+            'password': 'haridas'
+        }
+
+        self.client = Client()
+
+        self.filename = os.path.join(os.path.dirname(__file__),
+                                     "fixtures/images/me.jpg")
+
+        self.image = open(self.filename, 'rb')
+
+        # S3 Configurations Details.
+        self.conn = S3Connection(
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
+        self.bucket_name = settings.S3_IMAGE_BUCKET_NAME
+
+    def test_upload_api_and_cloud_syncing(self):
+        """
+        End-to-End Testing.
+        """
+        payload = {
+            'auth_token': self._get_auth_token(),
+            'image': self.image,
+            'async_operation': 'false'
+        }
+
+        response = json.loads(
+            self.client.post(self.upload_url, data=payload).content)
+
+        # Logger file got updated after the image upload.
+        self.logger_size_before = os.path.getsize(os.path.join(
+            settings.BASE_DIR, "logs/image_resize.log"))
+
+        # Check created images are being generated as per the specificatioin.
+        self.image_variants = dict([(a[0],
+                                     a[1]) for a in settings.IMAGE_VARIANTS])
+
+        self._check_api_response(response)
+        self._check_image_resize_operation(response)
+        self._check_image_logger_operation(response)
+        self._check_could_syncing_operation(response)
+
+    def _check_api_response(self, response):
+        self.assertTrue(response['success'])
+
+    def _check_image_resize_operation(self, response):
+        for name, img in response['image_urls'].iteritems():
+            img_file = os.path.join(settings.MEDIA_ROOT, img)
+
+            # File exists or not test
+            self.assertTrue(os.path.exists(img_file))
+
+            # Check the resize operation was done properly.
+            if name != Image.IMG_LABEL:
+                self.assertTrue(
+                    PILImage.open(img_file).size == self.image_variants.get(
+                        name))
+
+    def _check_image_logger_operation(self, response):
+        curr_size = os.path.getsize(os.path.join(
+            settings.BASE_DIR, "logs/image_resize.log"))
+
+        print curr_size, self.logger_size_before
+
+        # Checking that the logger got updated via its modification time.
+        # self.assertTrue(curr_size > self.logger_size_before)
+
+        # TODO: Since there is disk buffering effect the size or time change
+        # may not be sync on time, so we can't test the file change using time
+        # or size change of the logfile effectively. Find some alternate.
+
+    def _check_could_syncing_operation(self, response):
+        bucket = self.conn.create_bucket(self.bucket_name)
+
+        file_list = [key.name for key in bucket.list()]
+
+        img_file = ["/".join(FILE_PATH_PARSER.findall(
+            os.path.join(settings.MEDIA_ROOT, img))[0])
+            for img in response['image_urls'].values()]
+
+        print set(file_list).issuperset(set(img_file))
+
+    def _get_auth_token(self):
+        u = User(username=self.auth_data['username'])
+        u.set_password(self.auth_data['password'])
+        u.save()
+
+        response = self.client.post(self.auth_url, data=self.auth_data)
+        content = json.loads(response.content)
+        auth_token = content['auth_token']
+        return auth_token

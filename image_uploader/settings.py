@@ -147,13 +147,13 @@ LOGGING = {
 
     'loggers': {
         'log_img_operations': {
-            'handlers': ['console', 'file_img_op_logger'],
+            'handlers': ['file_img_op_logger'],
             'level': 'INFO',
         },
 
         # Catch all logger.
         '': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
         }
     }

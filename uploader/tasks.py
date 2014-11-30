@@ -31,7 +31,7 @@ img_logger = logging.getLogger("log_img_operations")
 
 # Used to extract Year, Month, day from the file name, so we can create S3 key
 # properly.
-FILE_PATH_PARSER = re.compile('^.*\/([0-9]{4})\/([0-9]{2})\/([0-9]{2}).*$')
+FILE_PATH_PARSER = re.compile('^.*\/([0-9]{4})\/([0-9]{2})\/([0-9]{2})\/(.*)$')
 
 
 @shared_task(routing_key="resize_image")
@@ -58,19 +58,24 @@ def resize_images(image_map, orginal_key, async_operation=True):
         orginal_img = Image.open(orginal_img_meta['path'])
 
         for sub_imgs in image_map.values():
-            _copy_org_img = orginal_img.copy()
-            _copy_org_img.resize(sub_imgs['size'])
+            _copy_org_img = orginal_img.resize(sub_imgs['size'])
             _copy_org_img.save(sub_imgs['path'])
 
             # Log the action.
             log_msg = ("New resized image with dimension: {size} - (wxh)"
                        " At loc: {path} has been generated from: {org_img}")
-            logger_task.delay("INFO", log_msg.format(
+
+            async_operation and logger_task.delay("INFO", log_msg.format(
+                size=sub_imgs['size'], path=sub_imgs['path'],
+                org_img=orginal_img_meta['path']))
+
+            not async_operation and logger_task("INFO", log_msg.format(
                 size=sub_imgs['size'], path=sub_imgs['path'],
                 org_img=orginal_img_meta['path']))
 
         # Push these images to CDN via background process.
-        sync_images_to_cdn.delay(image_map)
+        async_operation and sync_images_to_cdn.delay(image_map)
+        not async_operation and sync_images_to_cdn(image_map)
 
 
 @shared_task(routing_key="logger")
@@ -116,11 +121,10 @@ def sync_images_to_cdn(self, images):
             key = Key(bucket)
 
             # format: yyyy/mm/dd/<file-name>
-            key_name = os.path.join("/".join(
-                FILE_PATH_PARSER.findall(image['path'])[0]),
-                os.path.basename(image['path']))
+            key_name = "/".join(FILE_PATH_PARSER.findall(image['path'])[0])
 
             key.name = key_name
+
             key.set_contents_from_filename(image['path'])
 
     except (boto.exception.AWSConnectionError,

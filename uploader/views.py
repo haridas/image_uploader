@@ -110,7 +110,8 @@ class UploaderView(View):
 
             # A flag to turn on or of asynchronous nature of this API,
             # can be usefull to test the entire system effectively
-            async_operation = request.POST.get('async_operation', True)
+            async_operation = json.loads(request.POST.get('async_operation',
+                                                          'true'))
         except KeyError:
             data['error_msg'] = "Attribute `image` doesn't exists."
             return HttpResponse(content=json.dumps(data),
@@ -143,7 +144,7 @@ class UploaderView(View):
 
             # Do all operation synchronously.
             not async_operation and resize_images(
-                image.resized_image_paths, image.IMG_LABEL)
+                image.resized_image_paths, image.IMG_LABEL, async_operation)
 
         except DatabaseError as ex:
             data['error_msg'] = ("Error while saving on the Database "
