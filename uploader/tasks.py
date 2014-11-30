@@ -6,6 +6,9 @@ accesible across network.
 So we send messages with enough meta data to process the specified tasks. Make
 sure that we won't sent any unnecessary data through Broker for better
 performance.
+
+All the asynchronous tasks takes a special argument 'async_operation', a
+boolean flag which further decides to spwan async or synchronous job.
 """
 from __future__ import absolute_import
 
@@ -21,7 +24,7 @@ img_logger = logging.getLogger("log_img_operations")
 
 
 @shared_task(routing_key="resize_image")
-def resize_images(image_map, orginal_key):
+def resize_images(image_map, orginal_key, async_operation=True):
     """
     Resize the given set of images into specified targets. Resize and save it
     on the disk.
@@ -33,6 +36,9 @@ def resize_images(image_map, orginal_key):
 
     :param orginal_key: Name of the key on the map which hold the details of
                         original image's size and absolute location.
+
+    :param async_peration: Flag which to turn off any asynchronous operation
+                           done by this task. By default it is enabled.
 
     """
     if image_map:
@@ -57,7 +63,7 @@ def resize_images(image_map, orginal_key):
 
 
 @shared_task(routing_key="logger")
-def logger_task(log_level, message):
+def logger_task(log_level, message, async_operation=True):
     """
     Logging task. Main job is to keep track of all activities happening
     on different components of the system. All other components sends messages
@@ -65,6 +71,8 @@ def logger_task(log_level, message):
 
     :param log_level: Logger level. eg; INFO, ERROR, WARNING
     :param message: str, the message to be logged.
+    :param async_peration: Flag which to turn off any asynchronous operation
+                           done by this task. By default it is enabled.
     """
     if hasattr(img_logger, log_level.lower()):
         getattr(img_logger, log_level.lower())(message)
@@ -73,10 +81,16 @@ def logger_task(log_level, message):
         img_logger.warning("Log level given '{}' is invalid".format(log_level))
 
 
-@shared_task(routing_key="cdn_sync")
+@shared_task(routing_key="cdn_sync", async_operation=True)
 def sync_images_to_cdn(images):
     """
     A background task which will push the locally saved images to cloud for
     reduendency and easy access via CDNs.
+
+    :param images: Return value from
+                    class:~`uploader.models.Image.resized_image_paths`
+
+    :param async_peration: Flag which to turn off any asynchronous operation
+                           done by this task. By default it is enabled.
     """
     pass

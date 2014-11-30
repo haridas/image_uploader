@@ -36,7 +36,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    #'djcelery',
     'uploader'
 )
 
@@ -152,6 +151,7 @@ LOGGING = {
             'level': 'INFO',
         },
 
+        # Catch all logger.
         '': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
@@ -162,9 +162,9 @@ LOGGING = {
 #
 # Celery queue settings.
 #
-# img_resize_queue - Jobs are placed here for resize operation.
-# img_log          - Log the image details or uploaded img details.
-# sync_cdn         - Then place it on a queue to sync with CDN.
+# resize_image     - Jobs are placed here for resize operation.
+# logger           - Log the image details or uploaded img details.
+# cdn_sync         - Then place it on a queue to sync with CDN.
 #
 # NOTE: All using the default Exchange of type  direct.
 #

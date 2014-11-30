@@ -1,5 +1,6 @@
 import json
 import tempfile
+import logging
 
 from django.views.generic import View
 from django.http import HttpResponse
@@ -12,6 +13,8 @@ from django.conf import settings
 from .utils import validate_auth_token
 from .models import Image
 from .tasks import resize_images
+
+logger = logging.getLogger(__name__)
 
 
 class AuthView(View):
@@ -34,6 +37,8 @@ class AuthView(View):
             username = request.POST['username']
             password = request.POST['password']
         except KeyError:
+            logger.exception("Arguments are invalid.")
+
             result['success'] = False
             result['error_msg'] = (" Please provide `username` and `password`"
                                    " as POST request parameters.")
@@ -85,6 +90,12 @@ class UploaderView(View):
     def post(self, request, *args, **kwargs):
         """
         Handles the HTTP POST request.
+
+        payload_format = {
+            'image': <fileobject>,
+            'auth_token': <str>,
+            'async_operation': True/False (Default: True)
+        }
         """
         data = {
             'id': None,
@@ -96,6 +107,10 @@ class UploaderView(View):
         # Save the uploaded image on to temporary location.
         try:
             im = request.FILES['image']
+
+            # A flag to turn on or of asynchronous nature of this API,
+            # can be usefull to test the entire system effectively
+            async_operation = request.POST.get('async_operation', True)
         except KeyError:
             data['error_msg'] = "Attribute `image` doesn't exists."
             return HttpResponse(content=json.dumps(data),
@@ -123,8 +138,13 @@ class UploaderView(View):
             data['success'] = True
 
             # place the image resize job background using celery tasks.
-            resize_images.delay(image.resized_image_paths,
-                                image.IMG_LABEL)
+            async_operation and resize_images.delay(
+                image.resized_image_paths, image.IMG_LABEL)
+
+            # Do all operation synchronously.
+            not async_operation and resize_images(
+                image.resized_image_paths, image.IMG_LABEL)
+
         except DatabaseError as ex:
             data['error_msg'] = ("Error while saving on the Database "
                                  " - {}".format(ex.message))
