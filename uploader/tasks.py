@@ -110,7 +110,7 @@ def sync_images_to_cdn(self, images):
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
 
-        bucket = conn.create_bucket(settings.S3_IMAGE_BUCKET_NAMES)
+        bucket = conn.create_bucket(settings.S3_IMAGE_BUCKET_NAME)
 
         for image in images.values():
             key = Key(bucket)
