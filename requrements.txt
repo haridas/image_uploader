@@ -1,0 +1,4 @@
+django==1.7.1
+boto==0.0.3
+celery==3.1.17
+Pillow==2.6.1

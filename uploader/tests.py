@@ -9,6 +9,8 @@ from django.utils import timezone
 from django.core.files import File
 from django.test import TestCase
 from django.test import Client
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
 
 
 from django.conf import settings
@@ -183,3 +185,30 @@ class TestImageModel(TestCase):
         img.image = File(open(self.file_name))
         img.save()
         return img
+
+
+class AwsS3Tests(TestCase):
+    def setUp(self):
+        self.conn = S3Connection(
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
+        self.bucket_name = settings.S3_IMAGE_BUCKET_NAME
+        self.filename = os.path.join(os.path.dirname(__file__),
+                                     "fixtures/images/me.jpg")
+
+    def test_bucket_creation_and_access(self):
+        try:
+            bucket = self.conn.create_bucket(self.bucket_name)
+        except Exception as ex:
+            print ex
+
+        key = Key(bucket)
+        key.key = 'me.jpg'
+        key.set_contents_from_filename(self.filename)
+
+        keys = []
+        for key in bucket.list():
+            keys.append(key.name)
+
+        self.assertTrue(key.key in keys)
