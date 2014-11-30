@@ -1,4 +1,7 @@
 """
+@date: 27/Nov/2014
+@author: Haridas <haridas.nss@gmail.com>
+
 Django settings for image_uploader project.
 
 For more information on this file, see

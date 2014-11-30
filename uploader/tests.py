@@ -1,3 +1,15 @@
+"""
+@date: 27/Nov/2014
+@author: Haridas <haridas.nss@gmail.com>
+
+Active Testcases on this files are -
+
+1. Test authentication API.
+2. Test Upload API
+3. Test the Core data structure and Image Model's methods.
+4. AWS S3 behavior
+5. Full Integration Test.
+"""
 import os
 import json
 

@@ -1,4 +1,7 @@
 """
+@date: 27/Nov/2014
+@author: Haridas <haridas.nss@gmail.com>
+
 These tasks are supposed to be running on different machines. Those machiens
 may or maynot have access to the main database. But the file storage is
 accesible across network.
@@ -12,7 +15,6 @@ boolean flag which further decides to spwan async or synchronous job.
 """
 from __future__ import absolute_import
 import re
-import os
 
 from celery import shared_task
 from PIL import Image
