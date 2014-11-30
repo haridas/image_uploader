@@ -1,6 +1,6 @@
 """
 @date: 27/Nov/2014
-@author: Haridas <haridas.nss@gmail.com>
+@author: Haridas N<haridas.nss@gmail.com>
 
 Active Testcases on this files are -
 
@@ -290,16 +290,17 @@ class FullIntegrationTest(TestCase):
         curr_size = os.path.getsize(os.path.join(
             settings.BASE_DIR, "logs/image_resize.log"))
 
-        print curr_size, self.logger_size_before
+        # print curr_size, self.logger_size_before
 
         # Checking that the logger got updated via its modification time.
         # self.assertTrue(curr_size > self.logger_size_before)
 
-        # TODO: Since there is disk buffering effect the size or time change
+        # TODO: Since there is a disk buffering effect the size or time change
         # may not be sync on time, so we can't test the file change using time
         # or size change of the logfile effectively. Find some alternate.
 
     def _check_could_syncing_operation(self, response):
+
         bucket = self.conn.create_bucket(self.bucket_name)
 
         file_list = [key.name for key in bucket.list()]
@@ -308,7 +309,7 @@ class FullIntegrationTest(TestCase):
             os.path.join(settings.MEDIA_ROOT, img))[0])
             for img in response['image_urls'].values()]
 
-        print set(file_list).issuperset(set(img_file))
+        self.assertTrue(set(file_list).issuperset(set(img_file)))
 
     def _get_auth_token(self):
         u = User(username=self.auth_data['username'])

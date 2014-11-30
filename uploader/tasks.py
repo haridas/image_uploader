@@ -1,6 +1,6 @@
 """
 @date: 27/Nov/2014
-@author: Haridas <haridas.nss@gmail.com>
+@author: Haridas N<haridas.nss@gmail.com>
 
 These tasks are supposed to be running on different machines. Those machiens
 may or maynot have access to the main database. But the file storage is
@@ -76,6 +76,7 @@ def resize_images(image_map, orginal_key, async_operation=True):
                 org_img=orginal_img_meta['path']))
 
         # Push these images to CDN via background process.
+        image_map[orginal_key] = orginal_img_meta
         async_operation and sync_images_to_cdn.delay(image_map)
         not async_operation and sync_images_to_cdn(image_map)
 

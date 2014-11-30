@@ -1,6 +1,6 @@
 """
 @date: 27/Nov/2014
-@author: Haridas <haridas.nss@gmail.com>
+@author: Haridas N<haridas.nss@gmail.com>
 """
 import json
 import functools
