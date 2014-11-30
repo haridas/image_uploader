@@ -107,12 +107,78 @@ IMAGE_VARIANTS = [
 
 
 #
+# Handle Python logging.
+#
+LOG_ROOT = os.path.join(os.path.dirname(__file__), "../logs")
+if not os.path.exists(LOG_ROOT):
+    os.makedirs(LOG_ROOT)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file_img_op_logger': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_ROOT, "image_resize.log"),
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_ROOT, "debug.log"),
+        },
+    },
+
+    'loggers': {
+        'log_img_operations': {
+            'handlers': ['console', 'file_img_op_logger'],
+            'level': 'INFO',
+        },
+
+        '': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        }
+    }
+}
+
+#
 # Celery queue settings.
 #
 # img_resize_queue - Jobs are placed here for resize operation.
 # img_log          - Log the image details or uploaded img details.
 # sync_cdn         - Then place it on a queue to sync with CDN.
 #
+# NOTE: All using the default Exchange of type  direct.
+#
 
-CELERY_QUEUE = {
+CELERY_QUEUES = {
+    "logger": {
+        "routing_key": "logger",
+    },
+    "resize_image": {
+        "routing_key": "resize_image"
+    },
+    "cdn_sync": {
+        "routing_key": "cdn_sync"
+    }
 }
+
+CELERYD_HIJACK_ROOT_LOGGER = False

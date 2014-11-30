@@ -9,7 +9,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'image_uploader.settings')
 app = Celery('image_uploader')
 
 app.config_from_object('django.conf:settings')
+
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+
 
 
 @app.task(bind=True)
