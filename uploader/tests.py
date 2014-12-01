@@ -8,7 +8,9 @@ Active Testcases on this files are -
 2. Test Upload API
 3. Test the Core data structure and Image Model's methods.
 4. AWS S3 behavior
-5. Full Integration Test.
+5. Full Integration Test
+
+All these test will run without Http Server or Celery.
 """
 import os
 import json

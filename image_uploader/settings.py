@@ -1,6 +1,6 @@
 """
 @date: 27/Nov/2014
-@author: Haridas <haridas.nss@gmail.com>
+@author: Haridas N<haridas.nss@gmail.com>
 
 Django settings for image_uploader project.
 
@@ -50,6 +50,8 @@ MIDDLEWARE_CLASSES = (
     # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     # 'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # We are on fully restfull system, no need of these middlewares.
 )
 
 ROOT_URLCONF = 'image_uploader.urls'
@@ -195,5 +197,8 @@ AWS_SECRET_ACCESS_KEY = 'p5K7eVpf0XmTEOHz1AtczW+gLMNlOaPdUBsmD5is'
 AWS_REGION_NAME = 'us-east-1'
 S3_IMAGE_BUCKET_NAME = "sync_images"
 
+#
+# The CDN task retry settings.
+#
 TASK_MAX_RETRIES = 3
 TASK_RETRY_DELAY = 60  # in sec.

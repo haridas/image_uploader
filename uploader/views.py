@@ -164,6 +164,10 @@ class UploaderView(View):
             tp.write(chunk)
         return tp
 
+    def delete(self, request):
+        # TODO
+        pass
+
 
 class CatchAllView(View):
     pass
