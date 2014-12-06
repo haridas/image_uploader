@@ -192,8 +192,8 @@ CELERYD_HIJACK_ROOT_LOGGER = False
 #
 # AWS S3 Access details.
 #
-AWS_ACCESS_KEY_ID = 'AKIAIPD2RW3W27IX7CFA'
-AWS_SECRET_ACCESS_KEY = 'p5K7eVpf0XmTEOHz1AtczW+gLMNlOaPdUBsmD5is'
+AWS_ACCESS_KEY_ID = '<your-access-key-id>'
+AWS_SECRET_ACCESS_KEY = '<your-secret-access-kye>'
 AWS_REGION_NAME = 'us-east-1'
 S3_IMAGE_BUCKET_NAME = "sync_images"
 
